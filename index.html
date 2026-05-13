@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Logic Quest v4.2 - Teacher's Oversight Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon-cyan: #00ffcc; --neon-pink: #ff00ff; }
+        body { font-family: 'Fira Code', monospace; background-color: #050112; color: var(--neon-cyan); }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .card { background: rgba(15, 5, 30, 0.95); border: 2px solid var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 255, 204, 0.15); }
+        .btn-neon { border: 2px solid var(--neon-pink); color: var(--neon-pink); font-weight: 900; transition: 0.2s; }
+        .btn-neon:active { background: var(--neon-pink); color: #000; transform: scale(0.98); }
+        .done-card { border-color: var(--neon-pink); color: var(--neon-pink); }
+        code { background: #120428; padding: 12px; border-radius: 8px; color: #f0abfc; display: block; margin: 10px 0; border-left: 4px solid var(--neon-pink); font-size: 0.9rem; white-space: pre-wrap; /* Ez tartja meg a sortöréseket és szóközöket */}
+        input { font-size: 16px !important; }
+    </style>
+</head>
+<body class="p-4 min-h-screen flex flex-col items-center select-none">
+
+    <div id="login-screen" class="w-full max-w-md flex flex-col items-center justify-center min-h-[85vh] space-y-6">
+        <h1 class="orbitron text-4xl text-center font-black tracking-tighter text-white">PYTHON<br>QUEST</h1>
+        <div class="card p-8 rounded-3xl w-full text-center">
+            <p class="text-[10px] mb-4 uppercase tracking-[0.3em]">System Authentication</p>
+            <input type="text" id="user-name" placeholder="ÍRD BE A NEVED..." class="w-full bg-black border-2 border-cyan-400 p-4 rounded-xl outline-none text-white text-center mb-6 focus:border-pink-500 transition-colors">
+            <button onclick="startApp()" class="btn-neon w-full py-4 rounded-xl tracking-widest uppercase">Start Practice</button>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden w-full max-w-md">
+        <header class="flex justify-between items-center mb-6 pt-4 border-b border-white/10 pb-4">
+            <div>
+                <p id="display-name" class="text-white font-bold text-sm"></p>
+                <p id="session-timer" class="text-[10px] text-cyan-400 font-mono">Session Time: 00:00</p>
+            </div>
+            <div class="text-right">
+                <span id="global-xp" class="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">XP: 0</span>
+            </div>
+        </header>
+
+        <div id="hub-view" class="space-y-4">
+            <p class="text-[10px] uppercase font-bold opacity-50 tracking-widest mb-2">Available Modules</p>
+            <div class="grid grid-cols-1 gap-3" id="mission-grid"></div>
+            
+            <button id="report-trigger" onclick="generateFinalReport()" class="w-full mt-8 py-4 bg-cyan-400/10 border-2 border-cyan-400 text-cyan-400 rounded-2xl font-black orbitron text-xs tracking-widest hover:bg-cyan-400 hover:text-black transition-all">
+                GENERATE PROGRESS REPORT
+            </button>
+
+            <div id="finish-card" class="hidden card p-6 rounded-3xl border-yellow-500 bg-yellow-500/5 mt-4">
+                <h2 class="orbitron text-yellow-400 text-lg mb-4 text-center">OFFICIAL SESSION LOG</h2>
+                <div class="space-y-3 text-[11px] text-white/90 font-mono">
+                    <p class="flex justify-between border-b border-white/5 pb-1"><span>IDENT:</span> <span id="log-name" class="text-yellow-400 font-bold"></span></p>
+                    <p class="flex justify-between border-b border-white/5 pb-1"><span>DURATION:</span> <span id="log-time" class="text-white"></span></p>
+                    <p class="flex justify-between border-b border-white/5 pb-1"><span>TOTAL SOLVED:</span> <span id="log-tasks" class="text-white"></span></p>
+                    <p class="flex justify-between border-b border-white/5 pb-1"><span>MODULES DONE:</span> <span id="log-mods" class="text-white"></span></p>
+                    <p class="flex justify-between"><span>TIMESTAMP:</span> <span id="log-date" class="text-white"></span></p>
+                    
+                    <div class="mt-4 p-3 bg-black rounded-lg border border-pink-500/30">
+                        <p class="text-[8px] opacity-50 text-center mb-1 uppercase">Anti-Tamper Verification Hash</p>
+                        <p id="log-hash" class="text-[9px] text-pink-500 font-black text-center break-all"></p>
+                    </div>
+                </div>
+                <button onclick="this.parentElement.classList.add('hidden')" class="w-full mt-4 text-[9px] uppercase font-bold text-white/30 italic">Vissza a gyakorláshoz</button>
+            </div>
+        </div>
+
+        <div id="quest-view" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showHub()" class="px-4 py-2 text-[10px] text-purple-400 border border-purple-400/30 rounded-xl uppercase font-bold">× Abort</button>
+                <span id="quest-progress" class="text-[10px] bg-cyan-400/20 px-3 py-1 rounded-full font-bold">TASK 1/3</span>
+            </div>
+            <div id="quest-card" class="card p-8 rounded-[2.5rem]"></div>
+            <div id="feedback" class="mt-6 text-center text-xs font-black h-4 uppercase tracking-tighter"></div>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+  input_output: {
+    title: "Input/Output",
+    tasks: [
+      { q: "Melyik a helyes f-string formátum?", options: ["print(f'Szia {nev}!')", "print(f'Szia (nev)!')", "print(f'Szia [nev]!')"], ans: 0, type: "choice" },
+      { q: "Írasd ki a listát vesszővel elválasztva!", code: "print(*lista, ____=', ')", ans: "sep" },
+      { q: "Írasd ki a szöveget sortörés nélkül!", code: "print('Folytatás...', ____='')", ans: "end" },
+      { q: "Kérj be egy tizedes törtet!", code: "magassag = ____(input('Milyen magas vagy? ))", ans: "float" },
+      { q: "Kérj be egy egész számot!", code: "kor = ____(input('Mondj egy egész számot! ))", ans: "int" },
+      { q: "Kérj be egy szöveget a felhasználótól!", code: "nev = ____('Mi a neved? ')", ans: "input" },
+      { q: "Írd ki a nevet és a kort egy sorban!", code: "print(f'Név: {nev}, kor: ____')", ans: "{kor}" },
+      { q: "Írd ki a pontszam változó értékét f-stringgel!", code: "print(f'Pont: ____')", ans: "{pontszam}" },
+      { q: "Kérj be egy árat tizedes törtként!", code: "ar = ____(input('Mennyibe kerül? '))", ans: "float" },
+      { q: "Hogy írod ki, hogy két print egy sorba kerüljön?", code: "print('A', ____='')\nprint('B')", ans: "end" },
+      { q: "A második beolvasott adat legyen egész szám!", code: "a = input()\nb = ____(input())", ans: "int" },
+      { q: "Mi jelenik meg a képernyőn?", code: "print('Hello', end='! ')\nprint('Vége')", options: ["Hello!Vége", "Hello\nVége", "Hello! Vége"], ans: 2, type: "choice"},
+      { q: "Hogy választod el szóközzel az elemeket?", code: "print(1, 2, 3, ____=' ')", ans: "sep" },
+      { q: "Kérj be magasságot méterben (pl. 1.75)!", code: "m = ____(input('Magasság: '))", ans: "float" }
+    ]
+  },
+  logic_random: {
+    title: "If/Random",
+    tasks: [
+      { q: "A pontszám PONTOSAN 50?", code: "if pontszam ____ 50:", ans: "==" },
+      { q: "A létszám legfeljebb 30?", code: "if letszam ____ 30:", ans: "<=" },
+      { q: "Az összeg legalább 125?", code: "if osszeg ____ 125:", ans: ">=" },
+      { q: "Mi a kulcsszó az 'if' utáni újabb feltételhez?", code: "____ szam == 0:", ans: "elif" },
+      { q: "Hogy írod az egyébként ágat?", code: "____: print(szam)", ans: "else" },
+      { q: "Sorsolj véletlenszámot 1 és 6 között!", code: "dobas = random.____(1, 6)", ans: "randint" },
+      { q: "Válassz véletlen elemet a listából!", code: "nyeremeny = random.____(ajandekok)", ans: "choice" },
+      { q: "Válassz véletlen gyümölcsöt!", code: "gyumolcs = random.____(['eper', 'kivi', 'alma'])", ans: "choice" },
+      { q: "Sorsolj egy véletlen egész számot az első 100 számból!", code: "szam = random.randint(____)", ans: ["1,100", "1, 100"], type: "fill" },
+      { q: "A szám NAGYOBB mint 0?", code: "if szam ____ 0:", ans: ">" },
+      { q: "A szám NEM egyenlő nullával?", code: "if szam ____ 0:", ans: "!=" },
+      { q: "Sorsolj egy számot 10 és 20 között!", code: "x = random.____(10, 20)", ans: "randint" },
+      { q: "Ha kor < 18, írja ki: 'Kiskorú'!", code: "if kor ____ 18:\n    print('Kiskorú')", ans: "<" },
+      { q: "Az eredmény legfeljebb 100?", code: "if eredmeny ____ 100:", ans: "<=" },
+      { q: "Mi a modul neve a véletlenszámhoz?", code: "import ____", ans: "random" }
+    ]
+  },
+  lists_slicing: {
+    title: "Lists",
+    tasks: [
+      { q: "A lista 2. és 3. eleme!", code: "reszlet = lista[____]", ans: "1:3" },
+      { q: "A lista utolsó eleme!", code: "utolso = lista[____]", ans: "-1" },
+      { q: "A lista első 3 eleme!", code: "elsok = lista[____]", ans: [":3", "0:3"], type: "fill" },
+      { q: "A lista 5. eleme!", code: "otodik = lista[____]", ans: "4" },
+      { q: "Új elem a lista végéhez!", code: "lista.____(uj_adat)", ans: "append" },
+      { q: "Add hozzá az epret a gyümölcsök listához!", code: "gyumolcsok.append(____)", ans: "'eper'" },
+      { q: "Töröld ki az adott elemet!", code: "lista.____(adat)", ans: "remove" },
+      { q: "Hány eleme van a listának?", code: "hossz = ____(lista)", ans: "len" },
+      { q: "Hányszor szerepel az 'alma'?", code: "db = lista.____('alma')", ans: "count" },
+      { q: "A 4 elemű lista második fele!", code: "masodik_fel = lista[____]", ans: "2:" },
+      { q: "A lista utolsó 2 eleme!", code: "vegek = lista[____]", ans: "-2:" },
+      { q: "Hozz létre egy üres listát!", code: "lista = ____", ans: "[]" },
+      { q: "Hány elemet tartalmaz a lista?", code: "print(____(lista))", ans: "len" },
+      { q: "Töröld a 'tej'-et a bevásárló listából!", code: "bevasarlo.____('tej')", ans: "remove" },
+      { q: "Add hozzá a 100-at a számok listájához!", code: "szamok.____(100)", ans: "append" }
+    ]
+  },
+  loops_iteration: {
+    title: "Loops",
+    tasks: [
+      { q: "Menj végig a lista elemein!", code: "____ elem in gyumolcsok:", ans: "for" },
+      { q: "Menj végig a lista elemein!", code: "for elem ____ gyumolcsok:", ans: "in" },
+      { q: "Menj végig a lista indexein!", code: "for i in range(____(lista)):", ans: "len" },
+      { q: "Futtasd le pontosan 10-szer!", code: "for i in ____(10):", ans: "range" },
+      { q: "Futtasd le pontosan 4-szer!", code: "____ i in range(4):", ans: "for" },
+      { q: "Ismételd, amíg a jelszó nem helyes!", code: "____ jelszo != 'titok':", ans: "while" },
+      { q: "Ismételd, amíg a válasz nem 'igen'!", code: "while valasz ____ 'igen':", ans: "!=" },
+      { q: "Írd ki a számokat 0-tól 9-ig!", code: "for i in range(____):\n    print(i)", ans: "10" },
+      { q: "Írd ki az összes gyümölcsöt!", code: "for ____ in gyumolcsok:", ans: "gyumolcs" },
+      { q: "Számold meg ciklussal a listaelemeket!", code: "db = 0\nfor elem in lista:\n    db ____ 1", ans: "+=" },
+      { q: "Addig kérd be a számot, amíg nem pozitív!", code: "while szam ____ 0:", ans: "<=" },
+      { q: "Írd ki a számokat 1-től 5-ig !", code: "for i in range(____):\n    print(i)", ans: ["1,6", "1, 6"], type: "fill" },
+      { q: "Menj végig a 'szamok' listán!", code: "for szam in ____:", ans: "szamok" },
+      { q: "Futtasd le pontosan 7-szer!", code: "for i in range(____):", ans: "7" }
+    ]
+  }
+};
+
+        let userName = "";
+        let startTime, timerInterval;
+        let xp = 0;
+        let totalSolved = 0;
+        let completedCategories = [];
+        let questIndex = 0;
+        let currentDeck = [];
+        let currentCatKey = "";
+
+        function startApp() {
+            const input = document.getElementById('user-name');
+            if(input.value.trim().length < 3) return alert("Kérlek add meg a neved!");
+            userName = input.value.trim();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('display-name').innerText = userName;
+            startTime = Date.now();
+            startTimer();
+            showHub();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const s = (elapsed % 60).toString().padStart(2, '0');
+                document.getElementById('session-timer').innerText = `Session Time: ${m}:${s}`;
+            }, 1000);
+        }
+
+        function showHub() {
+            document.getElementById('hub-view').classList.remove('hidden');
+            document.getElementById('quest-view').classList.add('hidden');
+            const grid = document.getElementById('mission-grid');
+            grid.innerHTML = '';
+            Object.keys(categories).forEach(key => {
+                const done = completedCategories.includes(key);
+                grid.innerHTML += `<div onclick="startMission('${key}')" class="p-5 border-2 rounded-2xl flex justify-between items-center active:scale-95 transition-all ${done ? 'border-pink-500 text-pink-500' : 'border-cyan-400'}">
+                    <span class="orbitron text-xs font-bold">${categories[key].title}</span>
+                    <span class="text-[9px] font-black">${done ? '✓ COMPLETED' : 'PENDING'}</span>
+                </div>`;
+            });
+        }
+
+        function startMission(key) {
+            currentCatKey = key; questIndex = 0;
+            currentDeck = [...categories[key].tasks].sort(() => Math.random() - 0.5).slice(0, 3);
+            document.getElementById('hub-view').classList.add('hidden');
+            document.getElementById('quest-view').classList.remove('hidden');
+            nextQuest();
+        }
+
+        function nextQuest() {
+            if (questIndex >= currentDeck.length) {
+                if (!completedCategories.includes(currentCatKey)) completedCategories.push(currentCatKey);
+                showHub(); return;
+            }
+            renderQuest(currentDeck[questIndex]);
+            document.getElementById('quest-progress').innerText = `TASK ${questIndex + 1}/${currentDeck.length}`;
+        }
+
+        function renderQuest(q) {
+    const card = document.getElementById('quest-card');
+    // A kérdés szövege mindig megjelenik
+    let html = `<p class="text-sm font-bold text-white mb-6 leading-relaxed">${q.q}</p>`;
+    
+    // ÚJ: Ha van kód a feladatban, azt is megjelenítjük, típustól függetlenül!
+    if (q.code) {
+        // A .replace(/\n/g, '<br>') segít, hogy a \n karakterek sortöréssé váljanak
+        const displayCode = q.code.replace(/\n/g, '<br>');
+        html += `<code style="white-space: pre-wrap;">${displayCode}</code>`;
+    }
+    
+    if (q.type === "choice") {
+        // Választógombok generálása
+        q.options.forEach((opt, i) => {
+            html += `<button onclick="handleCheck(${i}, ${q.ans}, true)" class="w-full btn-neon p-5 mb-4 text-sm rounded-2xl text-left font-bold">${opt}</button>`;
+        });
+    } else {
+        // Szöveges beviteli mező generálása
+        html += `<input type="text" id="ans-input" autofocus class="w-full bg-black border-2 border-cyan-400 p-5 mt-4 rounded-2xl outline-none text-white font-bold text-lg focus:border-pink-500 transition-colors">
+                 <button onclick="handleCheck(document.getElementById('ans-input').value, null, false)" class="w-full btn-neon p-5 mt-6 rounded-2xl orbitron text-[10px]">VERIFY</button>`;
+    }
+    
+    card.innerHTML = html;
+    document.getElementById('feedback').innerText = '';
+}
+
+        window.handleCheck = (val, choiceAns, isChoice) => {
+            const q = currentDeck[questIndex];
+            let ok = isChoice ? (val === choiceAns) : (Array.isArray(q.ans) ? q.ans.some(a => a.toLowerCase() === val.trim().toLowerCase()) : val.trim().toLowerCase() === q.ans.toLowerCase());
+
+            if (ok) {
+                xp += 100; totalSolved++; questIndex++; 
+                document.getElementById('feedback').innerText = ">> SUCCESS";
+                document.getElementById('feedback').style.color = "var(--neon-cyan)";
+                setTimeout(nextQuest, 800);
+            } else {
+                document.getElementById('feedback').innerText = ">> SYNTAX ERROR";
+                document.getElementById('feedback').style.color = "var(--neon-pink)";
+            }
+            document.getElementById('global-xp').innerText = `XP: ${xp}`;
+        };
+
+        function generateFinalReport() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('finish-card').classList.remove('hidden');
+            document.getElementById('log-name').innerText = userName;
+            document.getElementById('log-time').innerText = `${Math.floor(elapsed/60)}p ${elapsed%60}mp`;
+            document.getElementById('log-tasks').innerText = `${totalSolved} feladat`;
+            document.getElementById('log-mods').innerText = `${completedCategories.length} / ${Object.keys(categories).length}`;
+            document.getElementById('log-date').innerText = new Date().toLocaleString('hu-HU');
+            
+            const hash = btoa(`${userName}|${totalSolved}|${elapsed}`).substring(0, 12).toUpperCase();
+            document.getElementById('log-hash').innerText = `SECURE-ID: ${hash}-${totalSolved}`;
+            
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
